@@ -1,0 +1,74 @@
+Step By Step to upgrade User Docker in RancherOS
+------------------------------------------------
+Target: Upgrade user docker from v19.03.x to v28.0.1.
+Pre-reqs: We have install RancherOS v1.5.8 on our machine. Be default it contain Docker (user docker v19.03.x and system docker v17.06.x)
+
+Step 1: Download the binaries of docker v28 (docker-28.0.1.tgz.tar) from docker official site.
+
+Step 2: unzip and upload binaries to RancherOS machine
+ $ unzip docker-28.0.1.tgz.tar
+ $ scp -r docker/ 192.168.56.105:/home/rancher/
+
+Step 3: login to RancherOS as rancher user and switch to root user
+ $ su -
+ # 
+ 
+Step 4: go to the following path and make a file with following contents
+ # cd /var/lib/rancher/conf/cloud-config.d/
+ # vi docker-28.0.1.yml 
+docker:
+ image: racher/docker28:v1.0
+ command: ros user-docker
+ environment:
+ - HTTP_PROXY
+ - HTTPS_PROXY
+ - NO_PROXY
+ labels:
+ io.rancher.os.scope: system
+ io.rancher.os.after: console
+ net: host
+ pid: host
+ ipc: host
+ uts: host
+ privileged: true
+ restart: always
+ volumes_from:
+ - all-volumes
+ volumes:
+ - /sys:/host/sys
+ - /var/lib/system-docker:/var/lib/system-docker:shared
+ 
+ Step 5: go to the following path and upload/move the Docker binaries
+ # cd /var/lib/rancher/engine
+ # rm *
+ # cp /home/rancher/docker/* .
+ 
+ Step 6: make image of Docker v28 using Docker file as follows
+ # cd /var/lib/rancher
+ # vi Dockerfile
+FROM scratch
+COPY engine /engine
+ # system-docker build -t racher/docker28:v1.0 .
+ # system-docker image ls
+REPOSITORY TAG IMAGE ID CREATED SIZE
+racher/docker28 v0.1 6689c82a326a 6 hours ago 212MB
+ 
+ Step7: Configure rancheros to load new version of docker i.e. v28 as default user Docker
+ # cd /var/lib/rancher/conf
+ # vi cloud-config.yml 
+rancher:
+ docker:
+ engine: /var/lib/rancher/conf/cloud-config.d/docker-28.0.1.yml
+
+ Step 8: reboot the rancheros machinerancher:
+ 
+ Step 9: test the docker version, it should be desired version.
+ for system Docker it will be v17.06
+ ------------------
+ $ sudo system-docker --version
+ $ sudo system-docker info
+ 
+ for user Docker it will be v28.0.1
+ ----------------
+ $ docker --version
+ $ docker info
