@@ -1,0 +1,30 @@
+mkdir certs
+#----------------------
+# Make CA cert
+#----------------------
+openssl genrsa -out certs/kubeca.key 2048
+openssl req -x509 -new -nodes -key certs/kubeca.key -subj "/CN=kubernetes.default.svc.cluster.local" -days 5000 -out certs/kubeca.crt
+#----------------------
+# Make server cert
+#----------------------
+openssl genrsa -out certs/server.key 2048
+openssl req -new -key certs/server.key -out certs/server.csr -config openssl.conf -subj "/CN=kubernetes.default.svc.cluster.local"
+openssl x509 -req -in certs/server.csr -CA certs/kubeca.crt -CAkey=certs/kubeca.key -CAcreateserial -out certs/server.crt -days 5000 -extensions server_cert -extfile openssl.conf -sha256
+openssl req -noout -text -in certs/server.csr 
+openssl x509 -noout -text -in certs/server.crt
+#----------------------
+# Make client cert
+#----------------------
+openssl genrsa -out certs/client.key 2048
+openssl req -new -key certs/client.key -out certs/client.csr -config openssl.conf -subj "/CN=client"
+openssl x509 -req -in certs/client.csr -CA certs/kubeca.crt -CAkey=certs/kubeca.key -CAcreateserial -out certs/client.crt -days 1000 -extensions usr_cert -extfile openssl.conf -sha256
+openssl req -noout -text -in certs/client.csr 
+openssl x509 -noout -text -in certs/client.crt
+#----------------------
+# Make service-account cert
+#----------------------
+openssl genrsa -our certs/service-account-key.pem 4096
+openssl genrsa -out certs/service-account-key.pem 4096
+openssl req -new -x509 -days 5000 -key certs/service-account-key.pem -sha256 -out certs/service-account-cert.pem -subj "/CN=kubernetes.default.svc.cluster.local" 
+openssl x509 -pubkey -noout -in certs/service-account-cert.pem > certs/service-account-pub.pem 
+ls -ltr certs/
