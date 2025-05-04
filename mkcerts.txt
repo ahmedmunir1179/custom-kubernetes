@@ -24,7 +24,6 @@ openssl x509 -noout -text -in certs/client.crt
 # Make service-account cert
 #----------------------
 openssl genrsa -our certs/service-account-key.pem 4096
-openssl genrsa -out certs/service-account-key.pem 4096
 openssl req -new -x509 -days 5000 -key certs/service-account-key.pem -sha256 -out certs/service-account-cert.pem -subj "/CN=kubernetes.default.svc.cluster.local" 
 openssl x509 -pubkey -noout -in certs/service-account-cert.pem > certs/service-account-pub.pem 
 ls -ltr certs/
